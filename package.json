@@ -1,0 +1,32 @@
+{
+  "name": "superposition-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "build": "npm run build -w apps/web",
+    "dev": "npm run dev -w apps/web",
+    "lint": "npm run lint -w apps/web",
+    "test": "npm run test -w apps/web && npm run test -w packages/contracts",
+    "compile:contracts": "npm run compile -w packages/contracts",
+    "ci": "npm install && npm run lint && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@eslint/eslintrc": "^3.0.2",
+    "@ethereumjs/util": "^8.1.0",
+    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "@noble/curves": "^1.1.0",
+    "@noble/hashes": "^1.2.0",
+    "@nodelib/fs.walk": "^1.2.8",
+    "@swc/helpers": "^0.4.36",
+    "abitype": "^1.0.5",
+    "aes-js": "^3.1.2",
+    "ajv": "^6.12.6",
+    "fast-glob": "^3.3.2",
+    "loupe": "^2.3.6",
+    "ox": "^0.6.0",
+    "uri-js": "^4.2.2"
+  }
+}
