@@ -1,0 +1,58 @@
+name: Deploy Contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: "Target Hardhat network (e.g. sepolia, mainnet)"
+        required: true
+        default: sepolia
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.network }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile contracts
+        run: npm run compile -w packages/contracts
+
+      - name: Export ABI snapshot
+        run: npm run export-abi -w packages/contracts
+
+      - name: Configure network environment
+        shell: bash
+        run: |
+          echo "HARDHAT_NETWORK=${{ github.event.inputs.network }}" >> "$GITHUB_ENV"
+          if [[ "${{ github.event.inputs.network }}" == "mainnet" ]]; then
+            echo "MAINNET_RPC_URL=${{ secrets.MAINNET_RPC_URL }}" >> "$GITHUB_ENV"
+          else
+            echo "SEPOLIA_RPC_URL=${{ secrets.SEPOLIA_RPC_URL }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Deploy SuperpositionNFT
+        run: npm run deploy -w packages/contracts -- --network ${{ github.event.inputs.network }}
+        env:
+          DEPLOYER_KEY: ${{ secrets.DEPLOYER_KEY }}
+          CONTRACT_DEPLOY_OUTPUT: ../abi
+          WEB_ABI_SYNC_PATH: ../../../apps/web/abis
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: superposition-${{ github.event.inputs.network }}-deployment
+          path: |
+            packages/contracts/abi/SuperpositionNFT.deployment.json
+            packages/contracts/abi/SuperpositionNFT.json

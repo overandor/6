@@ -1,0 +1,10 @@
+runtime: docker
+entrypoint: npm run start -w apps/web -- --hostname 0.0.0.0 --port 7860
+hardware: cpu-basic
+secrets:
+  - NEXT_PUBLIC_CHAIN_ID
+  - NEXT_PUBLIC_CONTRACT_ADDRESS
+  - NEXT_PUBLIC_RPC_URL
+  - EDGE_SIGNING_SECRET
+  - ADMIN_SESSION_TOKEN
+  - SENTRY_DSN

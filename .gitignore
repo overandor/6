@@ -1,0 +1,12 @@
+node_modules
+.next
+artifacts
+cache
+dist
+coverage
+npm-debug.log*
+.DS_Store
+.env
+apps/web/.env.local
+packages/contracts/artifacts
+packages/contracts/cache
