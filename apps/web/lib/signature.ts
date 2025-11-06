@@ -36,4 +36,16 @@ export async function requireSignature(request: Request) {
   }
 }
 
+export function signPath(pathname: string, timestamp = Date.now().toString()) {
+  const secret = process.env.EDGE_SIGNING_SECRET;
+  if (!secret) {
+    throw new Error("EDGE_SIGNING_SECRET is not configured");
+  }
+
+  const payload = `${timestamp}:${pathname}`;
+  const signature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+
+  return { signature, timestamp };
+}
+
 export { HttpError };

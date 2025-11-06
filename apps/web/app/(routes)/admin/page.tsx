@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getContract } from "@/lib/superposition";
+import { signPath } from "@/lib/signature";
 
 const ADMIN_COOKIE = "superposition-admin";
 const RATE_LIMIT_PATH = "/api/rate-limit";
@@ -9,29 +9,27 @@ const RATE_LIMIT_PATH = "/api/rate-limit";
 async function updateRateLimit(formData: FormData) {
   "use server";
 
-  const secret = process.env.EDGE_SIGNING_SECRET;
-  if (!secret) {
-    throw new Error("EDGE_SIGNING_SECRET is not configured");
-  }
-
-  const timestamp = Date.now().toString();
-  const signature = crypto
-    .createHmac("sha256", secret)
-    .update(`${timestamp}:${RATE_LIMIT_PATH}`)
-    .digest("hex");
+  const { signature, timestamp } = signPath(RATE_LIMIT_PATH);
 
   const payload = new URLSearchParams();
-  const baseFee = formData.get("baseFee");
-  payload.set("baseFee", typeof baseFee === "string" ? baseFee : "");
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") {
+      payload.set(key, value);
+    }
+  }
 
-  const host = headers().get("host");
-  const protocol = process.env.VERCEL ? "https" : "http";
+  const requestHeaders = headers();
+  const forwardedProto = requestHeaders.get("x-forwarded-proto");
+  const forwardedHost = requestHeaders.get("x-forwarded-host");
+  const host = requestHeaders.get("host");
+  const protocol = forwardedProto || (process.env.VERCEL ? "https" : "http");
+  const hostname = forwardedHost || host;
   const origin =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.SITE_URL ||
-    (host ? `${protocol}://${host}` : "http://localhost:3000");
+    (hostname ? `${protocol}://${hostname}` : "http://localhost:3000");
 
-  const response = await fetch(`${origin}${RATE_LIMIT_PATH}`, {
+  const response = await fetch(new URL(RATE_LIMIT_PATH, origin), {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
